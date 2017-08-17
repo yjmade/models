@@ -27,12 +27,12 @@ def multiclass_non_max_suppression(boxes,
                                    score_thresh,
                                    iou_thresh,
                                    max_size_per_class,
-                                   all_class_iou_thresh=1.,
                                    max_total_size=0,
                                    clip_window=None,
                                    change_coordinate_frame=False,
                                    masks=None,
                                    additional_fields=None,
+                                   all_class_iou_thresh=1.,
                                    scope=None):
   """Multi-class version of non maximum suppression.
 
@@ -159,14 +159,14 @@ def multiclass_non_max_suppression(boxes,
     selected_boxes = box_list_ops.concatenate(selected_boxes_list)
 
     if all_class_iou_thresh < 1.:
-      all_class_nms_indices = tf.image.non_max_suppression(
-          selected_boxes.get(),
-          selected_boxes.get_field(fields.BoxListFields.scores),
-          max_selection_size * num_classes,
-          iou_threshold=all_class_iou_thresh
-      )
-      selected_boxes = box_list_ops.gather(selected_boxes, all_class_nms_indices)
-
+      with tf.name_scope('AllClassNonMaxSuppression'):
+        all_class_nms_indices = tf.image.non_max_suppression(
+            selected_boxes.get(),
+            selected_boxes.get_field(fields.BoxListFields.scores),
+            max_selection_size * num_classes,
+            iou_threshold=all_class_iou_thresh
+        )
+        selected_boxes = box_list_ops.gather(selected_boxes, all_class_nms_indices)
     sorted_boxes = box_list_ops.sort_by_field(selected_boxes,
                                               fields.BoxListFields.scores)
     if max_total_size:
@@ -182,12 +182,12 @@ def batch_multiclass_non_max_suppression(boxes,
                                          score_thresh,
                                          iou_thresh,
                                          max_size_per_class,
-                                         all_class_iou_thresh=1,
                                          max_total_size=0,
                                          clip_window=None,
                                          change_coordinate_frame=False,
                                          num_valid_boxes=None,
                                          masks=None,
+                                         all_class_iou_thresh=1,
                                          scope=None,
                                          parallel_iterations=32):
   """Multi-class version of non maximum suppression that operates on a batch.
