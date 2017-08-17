@@ -27,6 +27,7 @@ def multiclass_non_max_suppression(boxes,
                                    score_thresh,
                                    iou_thresh,
                                    max_size_per_class,
+                                   all_class_iou_thresh=1.,
                                    max_total_size=0,
                                    clip_window=None,
                                    change_coordinate_frame=False,
@@ -85,6 +86,8 @@ def multiclass_non_max_suppression(boxes,
   """
   if not 0 <= iou_thresh <= 1.0:
     raise ValueError('iou_thresh must be between 0 and 1')
+  if not 0 <= all_class_iou_thresh <= 1.0:
+    raise ValueError('all_class_iou_threshold must be between 0 and 1')
   if scores.shape.ndims != 2:
     raise ValueError('scores field must be of rank 2')
   if scores.shape[1].value is None:
@@ -154,6 +157,16 @@ def multiclass_non_max_suppression(boxes,
               nms_result.get_field(fields.BoxListFields.scores)) + class_idx))
       selected_boxes_list.append(nms_result)
     selected_boxes = box_list_ops.concatenate(selected_boxes_list)
+
+    if all_class_iou_thresh < 1.:
+      all_class_nms_indices = tf.image.non_max_suppression(
+          selected_boxes.get(),
+          selected_boxes.get_field(fields.BoxListFields.scores),
+          max_selection_size * num_classes,
+          iou_threshold=all_class_iou_thresh
+      )
+      selected_boxes = box_list_ops.gather(selected_boxes, all_class_nms_indices)
+
     sorted_boxes = box_list_ops.sort_by_field(selected_boxes,
                                               fields.BoxListFields.scores)
     if max_total_size:
@@ -169,6 +182,7 @@ def batch_multiclass_non_max_suppression(boxes,
                                          score_thresh,
                                          iou_thresh,
                                          max_size_per_class,
+                                         all_class_iou_thresh=1,
                                          max_total_size=0,
                                          clip_window=None,
                                          change_coordinate_frame=False,
@@ -284,6 +298,7 @@ def batch_multiclass_non_max_suppression(boxes,
           iou_thresh,
           max_size_per_class,
           max_total_size,
+          all_class_iou_thresh=all_class_iou_thresh,
           masks=per_image_masks,
           clip_window=clip_window,
           change_coordinate_frame=change_coordinate_frame)

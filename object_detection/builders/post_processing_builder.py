@@ -82,6 +82,7 @@ def _build_non_max_suppressor(nms_config):
       post_processing.batch_multiclass_non_max_suppression,
       score_thresh=nms_config.score_threshold,
       iou_thresh=nms_config.iou_threshold,
+      all_class_iou_thresh=nms_config.all_class_iou_threshold,
       max_size_per_class=nms_config.max_detections_per_class,
       max_total_size=nms_config.max_total_detections)
   return non_max_suppressor_fn
