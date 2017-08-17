@@ -17,6 +17,8 @@ message BatchNonMaxSuppression {
 
   // Maximum number of detections to retain across all classes.
   optional int32 max_total_detections = 5 [default = 100];
+
+  optional float all_class_iou_threshold = 28 [default = 1.];
 }
 
 // Configuration proto for post-processing predicted boxes and
